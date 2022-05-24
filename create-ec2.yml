@@ -1,3 +1,4 @@
+---
 - name: Create a sandbox instance
   hosts: localhost
   gather_facts: False
