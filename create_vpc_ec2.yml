@@ -2,49 +2,54 @@
 - hosts: localhost
   become: yes
 
+  vars:
+    # key_name: my_aws
+    region: ap-east-1
+    vpc_subnet_id: subnet-05f50d25447c09f51
+
   tasks:
-    - name: Create VPC
-      ec2_vpc_net:
-        name: Test VPC
-        cidr_block: 10.1.0.0/16
-        region: ap-northeast-1
-        state: present
-      register: vpc_result
+    # - name: Create VPC
+    #   ec2_vpc_net:
+    #     name: Test VPC
+    #     cidr_block: 10.1.0.0/16
+    #     region: ap-northeast-1
+    #     state: present
+    #   register: vpc_result
 
-    - name: Create Internet Gateway
-      ec2_vpc_igw:
-        vpc_id: "{{ vpc_result.vpc.id }}"
-        region: ap-northeast-1
-        state: present
-        tags:
-          Name: tokyo_igw
+    # - name: Create Internet Gateway
+    #   ec2_vpc_igw:
+    #     vpc_id: "{{ vpc_result.vpc.id }}"
+    #     region: ap-northeast-1
+    #     state: present
+    #     tags:
+    #       Name: tokyo_igw
 
-    - name: Create Public Subnet
-      ec2_vpc_subnet:
-        cidr: 10.1.0.0/24
-        vpc_id: "{{ vpc_result.vpc.id }}"
-        region: ap-northeast-1
-        az: ap-northeast-1a
-        map_public: yes
-        state: present
-      register: subnet_result
+    # - name: Create Public Subnet
+    #   ec2_vpc_subnet:
+    #     cidr: 10.1.0.0/24
+    #     vpc_id: "{{ vpc_result.vpc.id }}"
+    #     region: ap-northeast-1
+    #     az: ap-northeast-1a
+    #     map_public: yes
+    #     state: present
+    #   register: subnet_result
 
-    - name: Create Routing Table
-      ec2_vpc_route_table:
-        vpc_id: "{{ vpc_result.vpc.id }}"
-        region: ap-northeast-1
-        state: present
-        subnets: ["{{ subnet_result.subnet.id }}"]
+    # - name: Create Routing Table
+    #   ec2_vpc_route_table:
+    #     vpc_id: "{{ vpc_result.vpc.id }}"
+    #     region: ap-northeast-1
+    #     state: present
+    #     subnets: ["{{ subnet_result.subnet.id }}"]
 
     - name: Create Security Group
       ec2_group:
-        name: default sg
+        name: jeongeok-server-sg
         vpc_id: "{{ vpc_result.vpc.id }}"
-        region: ap-northeast-1
+        region: "{{ region }}"
         state: present
         description: allow 22, 80
         tags:
-          Name: default sg
+          Name: cicd-sg
         rules:
         - proto: tcp
           ports:
@@ -55,26 +60,26 @@
           - 80
           cidr_ip: 0.0.0.0/0
 
-    - name: Create Tokyo EC2 key
+    - name: Create EC2 key
       ec2_key:
-        name: testkey
-        region: ap-northeast-1
+        name: cicdtestkey
+        region: "{{ region }}"
       register: key_result
 
     - name: Save Private Key
-      copy: content="{{ key_result.key.private_key }}" dest=/root/.ssh/testkey.pem mode=0400
+      copy: content="{{ key_result.key.private_key }}" dest=/root/.ssh/cicdtestkey.pem mode=0400
       when: key_result.changed
 
     - name: Create EC2
       ec2:
-        key_name: testkey
+        key_name: cicdtestkey
         instance_tags:
-          Name: test EC2
-        region: ap-northeast-1
+          Name: jeongeok.172.16.110.0-ec2 (2)
+        region: "{{ region }}"
         instance_type: t2.micro
-        image: ami-0ce107ae7af2e92b5
-        group: default sg
+        image: ami-0bdfa73d40abb1090
+        group: jeongeok-server-sg
         wait: yes
         count: 1
-        vpc_subnet_id: "{{ subnet_result.subnet.id }}"
+        vpc_subnet_id: "{{ vpc_subnet_id }}"
         assign_public_ip: yes
