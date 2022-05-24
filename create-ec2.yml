@@ -1,0 +1,8 @@
+amazon.aws.ec2:
+    key_name: jeongeok.park-hongkong
+    instance_type: t2.micro
+    image: jeongeok-ami
+    wait: yes
+    count: 1
+    vpc_subnet_id: subnet-05f50d25447c09f51
+    assign_public_ip: yes
