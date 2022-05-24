@@ -1,10 +1,15 @@
 ---
 - name: Create a sandbox instance
   hosts: localhost
+        - name: Get instances facts
+        ec2_instance_facts:
+          aws_access_key: "{{ec2_access_key}}"
+          aws_secret_key: "{{ec2_secret_key}}"
+          region: "{{ region }}"
   gather_facts: False
   vars:
     keypair: jeongeok.park-hongkong
-    instance_type: t2.micro
+    instance_type: t3.medium
     security_group: jeongeok-server-sg
     image: jeongeok-ami
     region: ap-east-1
